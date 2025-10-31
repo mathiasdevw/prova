@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <title>Simulado TI - Concurso para Médicos</title>
+  <style>
+    :root{
+      --bg:#f7fbff; --card:#ffffff; --accent:#0ea5e9; --muted:#6b7280; --ok:#059669; --bad:#ef4444; --border:#e6eef6;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Arial;line-height:1.45;margin:0;background:var(--bg);color:#0f1724;padding:16px}
+    .container{max-width:820px;margin:0 auto}
+    header{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+    h1{font-size:20px;margin:0;color:#052f4f}
+    p.lead{margin:0;color:var(--muted);font-size:14px}
+    .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.06);margin-bottom:18px;border:1px solid var(--border)}
+    .questions{display:grid;gap:12px}
+    .q{padding:12px;border-radius:8px;background:linear-gradient(180deg,#ffffff,#fbfeff);border:1px solid rgba(2,6,23,0.03)}
+    .q h3{font-size:15px;margin:0 0 8px 0;color:#07385a}
+    .options label{display:block;padding:8px;border-radius:8px;cursor:pointer;margin-bottom:6px;border:1px solid transparent}
+    .options input{margin-right:10px}
+    .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+    button{background:var(--accent);border:none;padding:10px 14px;border-radius:8px;color:white;font-weight:600;cursor:pointer}
+    button.secondary{background:transparent;border:1px solid rgba(7,56,90,0.06);color:var(--muted)}
+    .summaryBox{margin-left:auto;text-align:right}
+    .result{margin-top:14px;padding:12px;border-radius:8px;font-size:15px}
+    .result.good{background:rgba(5,150,105,0.08);border:1px solid rgba(5,150,105,0.18);color:var(--ok)}
+    .result.bad{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.12);color:var(--bad)}
+    .feedback{margin-top:12px}
+    .correction{background:#fbfeff;padding:10px;border-radius:8px;margin-bottom:8px;border-left:4px solid rgba(2,6,23,0.04);font-size:13px}
+    .correct{border-left-color:var(--ok)}
+    .incorrect{border-left-color:var(--bad)}
+    .small{font-size:13px;color:var(--muted)}
+    footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
+
+    /* Mobile-first tweaks for 6.1" (approx width 390px) */
+    @media (max-width:420px){
+      body{padding:12px}
+      .card{padding:12px}
+      h1{font-size:18px}
+      .q h3{font-size:14px}
+      .options label{font-size:14px;padding:8px}
+      .controls{flex-direction:column;align-items:stretch}
+      .summaryBox{text-align:left;margin-top:8px}
+      button{width:100%}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Simulado: Informática e TI — Concurso para Médicos</h1>
+      <p class="lead">30 questões objetivas. Tema claro (azul e branco). Marque uma alternativa por questão e clique em <strong>Corrigir</strong>.</p>
+    </header>
+
+    <main class="card">
+      <form id="quizForm" class="questions" autocomplete="off"></form>
+
+      <div class="controls">
+        <button id="checkBtn" type="button">Corrigir</button>
+        <button id="resetBtn" class="secondary" type="button">Limpar</button>
+        <div class="summaryBox small" id="summary"></div>
+      </div>
+
+      <div id="resultArea" aria-live="polite"></div>
+    </main>
+
+    <footer class="small">Feito para estudo — se quiser eu adiciono exportar resultados ou imprimir formato A4.</footer>
+  </div>
+
+  <script>
+    // Questões, alternativas e gabarito (30 questões)
+    const questions = [
+      {q:'1. O que é hardware?', opts:['Conjunto de programas de computador','Parte lógica do computador','Parte física do computador','Sistema operacional'], a:2, comment:'Hardware = parte física do computador.'},
+      {q:'2. O que é software?', opts:['Parte física do computador','Programas e sistemas utilizados no computador','Dispositivo de armazenamento','Placa-mãe'], a:1, comment:'Software = programas e sistemas.'},
+      {q:'3. Qual é a função do sistema operacional?', opts:['Apenas executar programas de planilha','Controlar o hardware e permitir a interação do usuário com o computador','Apenas armazenar arquivos','Conectar a internet'], a:1, comment:'SO = gerencia hardware e recursos.'},
+      {q:'4. A memória RAM tem como principal característica:', opts:['Armazenar dados permanentemente','Ser uma memória somente de leitura','Ser volátil — perde os dados ao desligar o computador','Servir como backup'], a:2, comment:'RAM é volátil; perde os dados ao desligar.'},
+      {q:'5. Um arquivo com extensão “.xlsx” é:', opts:['Documento de texto do Word','Planilha do Excel','Apresentação do PowerPoint','Arquivo compactado'], a:1, comment:'.xlsx = planilha do Excel.'},
+      {q:'6. O que significa “URL”?', opts:['User Registration Login','Universal Resource Locator','Uniform Record List','Universal Routing Link'], a:1, comment:'URL = endereço de recurso na internet.'},
+      {q:'7. Qual a principal diferença entre HTTP e HTTPS?', opts:['Nenhuma diferença','HTTPS utiliza criptografia para comunicação segura','HTTPS é mais rápido que HTTP','HTTP é usado apenas em redes locais'], a:1, comment:'HTTPS = versão segura do HTTP (criptografia).'},
+      {q:'8. O que é phishing?', opts:['Vírus de computador','Técnica de enganar usuários para roubar informações pessoais','Programa de antivírus','Sistema de backup'], a:1, comment:'Phishing = golpe para coletar dados sensíveis.'},
+      {q:'9. O que é um endereço IP?', opts:['Nome de um site','Número que identifica um dispositivo em uma rede','Tipo de antivírus','Arquivo de texto'], a:1, comment:'IP identifica um dispositivo em rede.'},
+      {q:'10. O que é criptografia?', opts:['Compressão de arquivos','Codificação de informações para protegê-las','Exclusão de dados','Armazenamento em nuvem'], a:1, comment:'Criptografia protege confidencialidade e integridade.'},
+      {q:'11. O que significa “backup”?', opts:['Eliminar arquivos antigos','Copiar dados importantes para outro local seguro','Criptografar dados sensíveis','Atualizar software'], a:1, comment:'Backup = cópia de segurança.'},
+      {q:'12. O que é um antivírus?', opts:['Programa que cria vírus','Programa que detecta e remove ameaças de software malicioso','Programa de edição de texto','Firewall'], a:1, comment:'Antivírus detecta e remove malwares.'},
+      {q:'13. O que é autenticação de dois fatores (2FA)?', opts:['Login automático','Sistema que requer duas formas de verificação para acessar uma conta','Atualização de software','Criptografia em nuvem'], a:1, comment:'2FA = duas formas de autenticação.'},
+      {q:'14. O que é o SUS?', opts:['Sistema de software privado','Sistema público de saúde brasileiro','Programa antivírus','Banco de dados nacional'], a:1, comment:'SUS = Sistema Único de Saúde.'},
+      {q:'15. O que é o SIAB?', opts:['Sistema de registro acadêmico','Sistema de Informação da Atenção Básica','Programa de agendamento hospitalar','Ferramenta de telemedicina'], a:1, comment:'SIAB = Informação da Atenção Básica.'},
+      {q:'16. O que é o e-SUS AB?', opts:['Sistema para registro de atendimentos da Atenção Básica','Software de farmácia','Programa de controle financeiro','Sistema de radiologia'], a:0, comment:'e-SUS AB registra atendimentos da Atenção Básica.'},
+      {q:'17. O que é o CNES?', opts:['Cadastro Nacional de Estabelecimentos de Saúde','Cadastro Nacional de Especialidades','Cadastro de Necessidades Estratégicas','Catálogo Nacional de Exames e Serviços'], a:0, comment:'CNES = cadastro dos estabelecimentos de saúde.'},
+      {q:'18. O que é o Prontuário Eletrônico do Paciente (PEP)?', opts:['Banco de dados financeiro','Registro digital das informações clínicas do paciente','Documento administrativo','Relatório de laboratório'], a:1, comment:'PEP = registro clínico eletrônico.'},
+      {q:'19. O que é interoperabilidade em saúde?', opts:['Integração de diferentes sistemas para trocarem informações entre si','Isolamento de sistemas','Backup automático','Controle de impressoras hospitalares'], a:0, comment:'Interoperabilidade = integração de sistemas.'},
+      {q:'20. O que é assinatura digital?', opts:['Imagem da assinatura manuscrita','Código que garante autenticidade e integridade de documentos eletrônicos','Documento escaneado','Software de edição'], a:1, comment:'Assinatura digital garante autenticidade e integridade.'},
+      {q:'21. A LGPD trata de:', opts:['Leis de proteção ambiental','Proteção de dados pessoais e privacidade','Código penal','Políticas de backup'], a:1, comment:'LGPD protege dados pessoais e privacidade.'},
+      {q:'22. O que é dado sensível segundo a LGPD?', opts:['Qualquer informação genérica','Dado sobre saúde, religião, origem racial, opinião política etc.','Endereço residencial','Nome completo'], a:1, comment:'Dado sensível = saúde, religião, origem racial, etc.'},
+      {q:'23. O que é anonimização de dados?', opts:['Tornar os dados públicos','Alterar ou remover informações que identifiquem uma pessoa','Criptografar arquivos','Excluir completamente registros'], a:1, comment:'Anonimização = remover identificadores pessoais.'},
+      {q:'24. Qual é a principal vantagem do prontuário eletrônico?', opts:['Dificulta o acesso a dados clínicos','Facilita o acesso e o compartilhamento de informações médicas de forma segura','Elimina o uso de internet','Dispensa backup'], a:1, comment:'PEP facilita acesso seguro às informações.'},
+      {q:'25. A telemedicina depende de:', opts:['Telefonia analógica','Conexão de dados e sistemas de informação','Arquivos em papel','Cartões magnéticos'], a:1, comment:'Telemedicina depende de conectividade e TI.'},
+      {q:'26. O Conecte SUS tem como objetivo:', opts:['Centralizar e disponibilizar dados de saúde do cidadão brasileiro','Gerenciar apenas exames laboratoriais','Substituir o SIAB','Ser usado apenas por médicos militares'], a:0, comment:'Conecte SUS centraliza dados do cidadão.'},
+      {q:'27. Qual o principal risco da má gestão de segurança digital em hospitais?', opts:['Atraso em consultas','Vazamento de dados de pacientes e interrupção de serviços','Falta de papel','Perda de produtividade apenas'], a:1, comment:'Risco: vazamento de dados e interrupção de serviços.'},
+      {q:'28. O que é um navegador (browser)?', opts:['Sistema operacional','Programa usado para acessar páginas da internet','Antivírus','Editor de texto'], a:1, comment:'Browser permite acessar páginas web.'},
+      {q:'29. Qual é o principal princípio da segurança da informação?', opts:['Privacidade, integridade e disponibilidade dos dados','Velocidade e estética','Capacidade de processamento','Quantidade de usuários'], a:0, comment:'Princípios: confidencialidade, integridade e disponibilidade.'},
+      {q:'30. Quais cuidados devem ser tomados ao enviar laudos por e-mail?', opts:['Enviar sem senha para agilizar o processo','Utilizar criptografia e verificar o destinatário','Enviar para qualquer endereço conhecido','Usar redes públicas de Wi-Fi'], a:1, comment:'Use criptografia e confirme o destinatário.'}
+    ];
+
+    const form = document.getElementById('quizForm');
+    const summary = document.getElementById('summary');
+    const resultArea = document.getElementById('resultArea');
+
+    // render questions
+    questions.forEach((item, idx)=>{
+      const div = document.createElement('div');
+      div.className = 'q';
+      div.id = 'q'+idx;
+      const h = document.createElement('h3');
+      h.textContent = (idx+1)+'. '+item.q.replace(/^\d+\.\s*/,'');
+      div.appendChild(h);
+
+      const opts = document.createElement('div');
+      opts.className = 'options';
+
+      item.opts.forEach((opt, i)=>{
+        const id = `q${idx}o${i}`;
+        const label = document.createElement('label');
+        label.htmlFor = id;
+        label.innerHTML = `<input type="radio" name="q${idx}" id="${id}" value="${i}"> <strong>${String.fromCharCode(65+i)}</strong>. ${opt}`;
+        opts.appendChild(label);
+      });
+
+      div.appendChild(opts);
+      form.appendChild(div);
+    });
+
+    document.getElementById('checkBtn').addEventListener('click', ()=>{
+      grade();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      form.reset();
+      resultArea.innerHTML='';
+      summary.textContent='';
+      document.querySelectorAll('.q').forEach(el=>el.classList.remove('correct','incorrect'));
+    });
+
+    function grade(){
+      let correct = 0;
+      const perQuestionFeedback = [];
+
+      questions.forEach((item, idx)=>{
+        const radios = document.getElementsByName('q'+idx);
+        let selected = '';
+        for(const r of radios){ if(r.checked){ selected = r.value; break; } }
+        const qDiv = document.getElementById('q'+idx);
+        qDiv.classList.remove('correct','incorrect');
+
+        if(selected === ''){
+          perQuestionFeedback.push({idx, ok:false, reason:'Não respondida', correctIndex:item.a});
+          qDiv.classList.add('incorrect');
+        } else if (parseInt(selected,10)===item.a){
+          correct++;
+          perQuestionFeedback.push({idx, ok:true, reason:'Correta', correctIndex:item.a});
+          qDiv.classList.add('correct');
+        } else {
+          perQuestionFeedback.push({idx, ok:false, reason:'Errada', correctIndex:item.a});
+          qDiv.classList.add('incorrect');
+        }
+      });
+
+      // summary
+      summary.textContent = `${correct} / ${questions.length} corretas`;
+
+      // result area
+      resultArea.innerHTML = '';
+      const pct = Math.round((correct/questions.length)*100);
+      const resultBox = document.createElement('div');
+      resultBox.className = 'result ' + (pct >= 70 ? 'good' : 'bad');
+      resultBox.innerHTML = `<strong>Você acertou ${correct} de ${questions.length} perguntas — ${pct}%</strong>`;
+      resultArea.appendChild(resultBox);
+
+      // corrections
+      const fb = document.createElement('div');
+      fb.className = 'feedback';
+
+      questions.forEach((item, idx)=>{
+        const radios = document.getElementsByName('q'+idx);
+        let selected = '';
+        for(const r of radios){ if(r.checked){ selected = r.value; break; } }
+        const f = document.createElement('div');
+        f.className = 'correction ' + (perQuestionFeedback[idx].ok ? 'correct' : 'incorrect');
+        const your = selected === '' ? '— (não respondeu)' : String.fromCharCode(65+parseInt(selected,10));
+        const correctLetter = String.fromCharCode(65+item.a);
+        f.innerHTML = `<strong>Q${idx+1}.</strong> ${item.q.replace(/^\d+\.\s*/,'')}<br>
+                       <span class="small">Sua resposta: ${your} • Correta: ${correctLetter}. ${item.opts[item.a]}</span>
+                       <div class="small" style="margin-top:6px;color:var(--muted)">${item.comment}</div>`;
+        fb.appendChild(f);
+      });
+
+      resultArea.appendChild(fb);
+      // scroll to result for small screens
+      resultArea.scrollIntoView({behavior:'smooth'});
+    }
+  </script>
+</body>
+</html>

@@ -45,6 +45,7 @@ const questionCounter = document.getElementById('questionCounter');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 const checkBtn = document.getElementById('checkBtn');
+const finalBtn = document.getElementById('finalBtn');
 
 let userName = '';
 let userProfession = '';
@@ -141,6 +142,9 @@ nextBtn.addEventListener('click', ()=>{
   }
   nextBtn.disabled = currentQuestionIndex === questions.length - 1;
   prevBtn.disabled = false;
+  if(currentQuestionIndex === questions.length - 1){
+    finalBtn.style.display = 'inline-block';
+  }
 });
 
 checkBtn.addEventListener('click', ()=>{
@@ -166,6 +170,23 @@ checkBtn.addEventListener('click', ()=>{
     resultArea.appendChild(resultBox);
   }
   resultArea.scrollIntoView({behavior:'smooth'});
+});
+
+function grade(){
+  let correct = 0;
+  let total = questions.length;
+  for(let i = 0; i < total; i++){
+    if(answers[i] !== null && parseInt(answers[i], 10) === questions[i].a){
+      correct++;
+    }
+  }
+  let pct = Math.round((correct / total) * 100);
+  summary.textContent = `${userName} (${userProfession}), você acertou ${correct} de ${total} perguntas (${pct}%). Bons estudos obrigado por fazer esse simulado.`;
+  summary.scrollIntoView({behavior:'smooth'});
+}
+
+finalBtn.addEventListener('click', ()=>{
+  grade();
 });
 
 document.getElementById('resetBtn').addEventListener('click', ()=>{
